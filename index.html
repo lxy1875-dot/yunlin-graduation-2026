@@ -289,11 +289,11 @@ body {
   display:none;
   opacity:0;
   overflow:visible;
-  transform:translateX(32px);
-  transition:opacity 1.3s ease, transform 1.3s cubic-bezier(.22,1,.36,1);
+  transform:translateY(24px) scale(0.96);
+  transition:opacity 2.4s ease, transform 2.4s cubic-bezier(.22,1,.36,1);
 }
 #photo-frame.show {
-  opacity:1; transform:translateX(0);
+  opacity:1; transform:translateY(0) scale(1);
 }
 
 /* Gold mat frame */
@@ -331,14 +331,12 @@ body {
     drop-shadow(0 0 4px rgba(160,20,20,.20))
     drop-shadow(0 8px 22px rgba(120,0,0,.38));
   opacity:.90;
-  animation:stamp-fall .55s cubic-bezier(.175,.885,.32,1.275) both;
+  animation:stamp-fall 1.6s cubic-bezier(.22,1,.36,1) both;
   animation-play-state:paused;
 }
 #stamp.go { animation-play-state:running; }
 @keyframes stamp-fall {
-  0%   {transform:rotate(-14deg) scale(3.2);opacity:0;filter:drop-shadow(0 0 0 transparent)}
-  55%  {transform:rotate(-14deg) scale(.90);opacity:.90}
-  78%  {transform:rotate(-14deg) scale(1.06)}
+  0%   {transform:rotate(-14deg) scale(2.0);opacity:0;filter:drop-shadow(0 0 0 transparent)}
   100% {transform:rotate(-14deg) scale(1);opacity:.90}
 }
 #stamp svg { width:140px; height:140px; }
@@ -620,29 +618,18 @@ const LETTER = [
 
 /* ══ CAMERA SCROLL ══ */
 let _camRaf = null;
-let _scrollVel = 0;   // velocity (px/frame) — carries inertia across frames
 
 function startCameraScroll() {
   if (_camRaf) return;
   const ct = document.getElementById('scene-letter');
-  const paper = document.querySelector('.ltr-paper');
-  _scrollVel = 0;
+  let vel = 0;
 
   function step() {
-    const contH = ct.clientHeight;
-    const paperB = paper.getBoundingClientRect().bottom;
-    const ideal  = ct.getBoundingClientRect().top + contH * 0.70;
-    const gap    = paperB - ideal;
-
-    // Target velocity proportional to gap but capped at 0.9 px/frame
-    const targetVel = gap > 4 ? Math.min(gap * 0.0028, 0.9) : 0;
-    // Heavy inertia — velocity only moves 2% toward target each frame,
-    // so sudden content-height jumps (new line appears) never cause jerking
-    _scrollVel += (targetVel - _scrollVel) * 0.02;
-
-    if (_scrollVel > 0.004) {
-      ct.scrollTop += _scrollVel;
-    }
+    // Pure constant-velocity drift — zero relationship to content position.
+    // Target 0.17 px/frame ≈ 10 px/s; eases in gently over ~5 s.
+    // Browser clamps ct.scrollTop, so we never scroll past unrendered content.
+    vel += (0.17 - vel) * 0.004;
+    ct.scrollTop += vel;
     _camRaf = requestAnimationFrame(step);
   }
   _camRaf = requestAnimationFrame(step);
@@ -683,18 +670,20 @@ function revealLetter() {
     delay += (sec.t === 'poem') ? 560 : (sec.t === 'greeting' ? 400 : 780);
   });
 
-  // Show footer elements after all text
+  // Show footer elements after all text — staggered so nothing feels sudden
   setTimeout(() => {
     const pf = document.getElementById('photo-frame');
     pf.style.display = 'block';
     requestAnimationFrame(() => requestAnimationFrame(() => pf.classList.add('show')));
-  }, delay + 200);
+  }, delay + 1400);
   setTimeout(() => {
     document.getElementById('stamp').classList.add('go');
-    document.getElementById('shint').classList.add('show');
-    // Ending: stop camera, fade music after 8s
+  }, delay + 3600);
+  setTimeout(() => {
+    // Camera has drifted to bottom naturally; cancel RAF, show hint
     if (_camRaf) { cancelAnimationFrame(_camRaf); _camRaf = null; }
-  }, delay + 900);
+    document.getElementById('shint').classList.add('show');
+  }, delay + 4800);
 
   // Music gently fades out 8s after everything is shown
   setTimeout(() => {
