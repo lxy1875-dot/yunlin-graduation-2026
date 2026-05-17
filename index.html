@@ -186,8 +186,14 @@ body {
     0 6px 18px rgba(0,0,0,.30);
   opacity:0; transform:translateY(28px) scale(.97);
   transition:opacity .95s ease, transform .95s ease;
+  transform-origin:center top;
 }
 .ltr-paper.show { opacity:1; transform:none; }
+@keyframes paper-drift {
+  from { transform: scale(1.000); }
+  to   { transform: scale(1.025); }
+}
+.ltr-paper.drifting { animation: paper-drift 200s linear forwards; }
 
 /* Double inner border */
 .ltr-paper::before {
@@ -259,14 +265,14 @@ body {
 .c {
   display:inline;
   opacity:0;
-  transition:opacity 3.2s ease-in-out;
+  transition:opacity 2.4s ease-in-out;
   will-change:opacity;
 }
 .c.v { opacity:1; }
 
 /* ── POEM + PHOTO side by side ── */
 #poem-photo-wrap {
-  display:flex; align-items:center; gap:18px;
+  display:flex; align-items:center; gap:10px;
   margin-top:44px; margin-bottom:0;
 }
 #poem-col {
@@ -278,7 +284,7 @@ body {
 
 /* Photo – right column of poem-photo row */
 #photo-frame {
-  flex:0 0 clamp(130px, 40vw, 195px);
+  flex:0 0 clamp(155px, 46vw, 230px);
   position:relative; z-index:1;
   display:none; opacity:0; overflow:visible;
   transform:translateY(20px) scale(0.95);
@@ -337,12 +343,14 @@ body {
     drop-shadow(0 0 4px rgba(160,20,20,.20))
     drop-shadow(0 8px 22px rgba(120,0,0,.38));
   opacity:.90;
-  animation:stamp-fall 1.6s cubic-bezier(.22,1,.36,1) both;
+  animation:stamp-fall 2.8s ease-in-out both;
   animation-play-state:paused;
 }
 #stamp.go { animation-play-state:running; }
 @keyframes stamp-fall {
-  0%   {transform:rotate(-14deg) scale(2.0);opacity:0;filter:drop-shadow(0 0 0 transparent)}
+  0%   {transform:rotate(-14deg) scale(1.12);opacity:0;filter:drop-shadow(0 0 0 transparent)}
+  25%  {opacity:.22}
+  65%  {opacity:.72}
   100% {transform:rotate(-14deg) scale(1);opacity:.90}
 }
 #stamp svg { width:140px; height:140px; }
@@ -486,22 +494,19 @@ body {
             <g filter="url(#sf)">
               <circle cx="50" cy="50" r="46" stroke="#8b1515" stroke-width="3.8" fill="none" opacity=".92"/>
               <circle cx="50" cy="50" r="39" stroke="#8b1515" stroke-width="1.1" fill="none" opacity=".82"/>
-              <text x="50" y="25" text-anchor="middle" fill="#8b1515"
-                    font-size="7" font-family="'QiGong',serif" letter-spacing="3.8" opacity=".78">毕业纪念</text>
-              <line x1="15" y1="50" x2="85" y2="50" stroke="#8b1515" stroke-width=".9" opacity=".48"/>
-              <text x="28" y="44" text-anchor="middle" fill="#8b1515"
-                    font-size="22" font-family="'QiGong',serif" font-weight="700" opacity=".94">毕</text>
-              <text x="72" y="44" text-anchor="middle" fill="#8b1515"
-                    font-size="22" font-family="'QiGong',serif" font-weight="700" opacity=".94">业</text>
-              <text x="28" y="71" text-anchor="middle" fill="#8b1515"
-                    font-size="22" font-family="'QiGong',serif" font-weight="700" opacity=".94">快</text>
-              <text x="72" y="71" text-anchor="middle" fill="#8b1515"
-                    font-size="22" font-family="'QiGong',serif" font-weight="700" opacity=".94">乐</text>
-              <text x="50" y="82" text-anchor="middle" fill="#8b1515"
+              <text x="50" y="26" text-anchor="middle" fill="#8b1515"
+                    font-size="5.5" font-family="'Georgia',serif" letter-spacing="1.2" opacity=".78">WAKE FOREST</text>
+              <text x="50" y="46" text-anchor="middle" fill="#8b1515"
+                    font-size="10" font-family="'Georgia',serif" font-weight="700" letter-spacing="1" opacity=".94">M · S</text>
+              <text x="50" y="59" text-anchor="middle" fill="#8b1515"
+                    font-size="8" font-family="'Georgia',serif" font-weight="700" letter-spacing="0.2" opacity=".90">COUNSELING</text>
+              <text x="50" y="70" text-anchor="middle" fill="#8b1515"
+                    font-size="6.5" font-family="'Georgia',serif" letter-spacing="2.5" opacity=".72">2026</text>
+              <text x="50" y="81" text-anchor="middle" fill="#8b1515"
                     font-size="6" font-family="'Georgia',serif" letter-spacing="2" opacity=".70">Yunlin</text>
               <text fill="#8b1515" font-size="5" font-family="'Georgia','Arial',serif"
                     letter-spacing="0.7" opacity=".72">
-                <textPath href="#bot-arc" startOffset="50%" text-anchor="middle">WAKE FOREST · COUNSELING</textPath>
+                <textPath href="#bot-arc" startOffset="50%" text-anchor="middle">· CLASS OF 2026 ·</textPath>
               </text>
             </g>
           </svg>
@@ -599,6 +604,7 @@ function goToLetter() {
   const lp = document.getElementById('ltr-paper');
   setTimeout(() => {
     lp.classList.add('show');
+    setTimeout(() => lp.classList.add('drifting'), 1600);
     setTimeout(revealLetter, 980);
   }, 100);
 }
@@ -609,7 +615,7 @@ const LETTER = [
   {t:'p', s:'今天对你来说，是一个尤其重要的日子。'},
   {t:'p', s:'我想，毕业从来都不只是"完成了一段学业"这么简单。它更像是，你终于走过了一段很长很长的路，回头看的时候，才发现自己已经翻过了那么多座山。'},
   {t:'p', s:'这两年的时间，我看到过你悲伤无助的样子，看到过你痛苦挣扎的样子。我看你如何在痛苦中，一步一步，勇敢地往前走；看你一次次摇摆，却仍然选择回到自己的初心。我也和你一起，见证了你的成就，见证了你的喜悦，见证了你慢慢长成今天这个更坚定、更柔软，也更有力量的人。'},
-  {t:'p', s:'还记得你写下的那些"日记"。站在那个时间的窗口里，满眼都是绝望和悲伤，甚至不知道自己该怎样熬过那漫长的几个月。那时候的你，或许也不会想到，今天的你，真的会站在这里，穿着毕业袍，被爱包围着，带着笑意，迎接属于你的这一刻。'},
+  {t:'p', s:'还记得你写下的那封"日记"。站在那个时间的窗口里，满眼都是绝望和悲伤，甚至不知道自己该怎样熬过那漫长的几个月。那时候的你，或许也不会想到，今天的你，真的会站在这里，穿着毕业袍，被爱包围着，带着笑意，迎接属于你的这一刻。'},
   {t:'p', s:'所以今天，请一定要为自己骄傲。不是因为你"撑过来了"，而是因为你在那些最难的时候，没有放弃自己。'},
   {t:'p', s:'你说，除了我，还有你的咨询师陪你走过了这艰难的时光。但其实，陪着你的，从来不只是我们。'},
   {t:'p', s:'从最开始的痛苦无助，到慢慢开始尝试理解美国人，慢慢了解美国的 small talk，了解美国一些的文化，到更多地了解自己，这些都是你成长的印记，这些印记一直陪着你。'},
@@ -618,7 +624,7 @@ const LETTER = [
   {t:'p', s:'这些相遇，这些印记，这些你认真触碰过的生命，都会陪着你，走向更远的未来。'},
   {t:'p', s:'未来的路还很长。去成为你想成为的大人，去找到更多的深刻链接，去体验更丰富的人生，去继续追逐你理想中的未来。'},
   {t:'p', s:'同时也请记住，你也不用很急着去成为谁。你的存在本身，就已经很有意义。你的快乐，是最重要的事。'},
-  {t:'poem', s:'是流星赞美了黑夜，\n鲸鱼安慰了大海\n\n而你的存在，\n本身就是这个世界\n很美好的一部分。'},
+  {t:'poem', s:'是流星赞美了黑夜，\n鲸鱼安慰了大海\n\n而你的存在，\n点亮了这个世界'},
   {t:'closing', s:'毕业快乐，Yunlin'},
   {t:'sign', s:'xinyi'},
 ];
@@ -704,13 +710,13 @@ function revealLetter() {
   setTimeout(() => { if (playing) stopMusic(); }, totalDelay + 9000);
 }
 function charDelay(ch) {
-  const j = () => (Math.random() - 0.5) * 32;
-  if (ch === ' ')             return 42;
-  if ('，；'.includes(ch))   return 600 + j();
-  if ('。！？'.includes(ch)) return 980 + j();
-  if (ch === '\n')           return 440;
-  if ('——…'.includes(ch))    return 180;
-  return 200 + j();
+  const j = () => (Math.random() - 0.5) * 28;
+  if (ch === ' ')             return 38;
+  if ('，；'.includes(ch))   return 480 + j();
+  if ('。！？'.includes(ch)) return 780 + j();
+  if (ch === '\n')           return 350;
+  if ('——…'.includes(ch))    return 155;
+  return 155 + j();
 }
 
 /* ══ MUSIC ══ */
