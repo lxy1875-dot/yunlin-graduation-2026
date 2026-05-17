@@ -272,14 +272,14 @@ body {
 
 /* ── POEM + PHOTO side by side ── */
 #poem-photo-wrap {
-  display:flex; align-items:center; gap:10px;
+  display:flex; align-items:flex-start; gap:10px;
   margin-top:44px; margin-bottom:0;
 }
 #poem-col {
   flex:1; min-width:0;
 }
 #poem-col .l-poem {
-  margin:0; text-align:left; font-size:15px; line-height:2.5;
+  margin:0; text-align:left; font-size:17px; line-height:2.6;
 }
 
 /* Photo – right column of poem-photo row */
@@ -497,7 +497,7 @@ body {
               <text x="50" y="26" text-anchor="middle" fill="#8b1515"
                     font-size="5.5" font-family="'Georgia',serif" letter-spacing="1.2" opacity=".78">WAKE FOREST</text>
               <text x="50" y="46" text-anchor="middle" fill="#8b1515"
-                    font-size="10" font-family="'Georgia',serif" font-weight="700" letter-spacing="1" opacity=".94">M · S</text>
+                    font-size="10" font-family="'Georgia',serif" font-weight="700" letter-spacing="1" opacity=".94">M · A</text>
               <text x="50" y="59" text-anchor="middle" fill="#8b1515"
                     font-size="8" font-family="'Georgia',serif" font-weight="700" letter-spacing="0.2" opacity=".90">COUNSELING</text>
               <text x="50" y="70" text-anchor="middle" fill="#8b1515"
@@ -716,7 +716,7 @@ function charDelay(ch) {
   if ('。！？'.includes(ch)) return 780 + j();
   if (ch === '\n')           return 350;
   if ('——…'.includes(ch))    return 155;
-  return 155 + j();
+  return 140 + j();
 }
 
 /* ══ MUSIC ══ */
