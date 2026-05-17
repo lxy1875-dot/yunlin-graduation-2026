@@ -565,15 +565,12 @@ function openEnv() {
   // Disable onclick
   scene.onclick = null;
 
-  // Phase 1: flap opens (1.65s) + face fades (0.85s after 0.65s)
-  // Phase 2: peek rises (after 1.15s)
-  // Phase 3: envelope fades (after 2.2s)
-  // Phase 4: go to letter (after 3.0s)
-
-  // Peek rises in sync with flap (small offset so they feel like one motion)
+  // Flap opens over 3.2s. At ~1.35s the flap passes 90° and its front face
+  // disappears (backface-visibility:hidden). Only THEN does the peek rise,
+  // so the paper never appears to pass through the still-flat flap.
   setTimeout(() => {
     document.getElementById('env-peek').style.transform = 'translateY(-215px)';
-  }, 180);
+  }, 1380);
 
   // Scene fades after flap is mostly open
   setTimeout(() => {
@@ -619,17 +616,20 @@ const LETTER = [
 /* ══ CAMERA SCROLL ══ */
 let _camRaf = null;
 
-function startCameraScroll() {
+// Called after paper height is known (pre-rendered). Scrolls at exactly the
+// right constant speed to traverse totalDistance in totalDurationMs.
+function startCameraScroll(totalDurationMs, totalDistance) {
   if (_camRaf) return;
   const ct = document.getElementById('scene-letter');
-  let vel = 0;
+  if (totalDistance <= 0) return;
+
+  const targetVel = totalDistance / (totalDurationMs / 1000 * 60);
+  let pos = 0, vel = 0;
 
   function step() {
-    // Pure constant-velocity drift — zero relationship to content position.
-    // Target 0.17 px/frame ≈ 10 px/s; eases in gently over ~5 s.
-    // Browser clamps ct.scrollTop, so we never scroll past unrendered content.
-    vel += (0.17 - vel) * 0.004;
-    ct.scrollTop += vel;
+    vel += (targetVel - vel) * 0.03; // ease in over ~1s
+    pos += vel;
+    ct.scrollTop = pos; // float accumulator avoids integer-rounding stutter
     _camRaf = requestAnimationFrame(step);
   }
   _camRaf = requestAnimationFrame(step);
@@ -639,56 +639,52 @@ function revealLetter() {
   const box = document.getElementById('ltr-body');
   const left = document.getElementById('ltr-left');
   let delay = 0;
-  const elems = [];
-  startCameraScroll();
+  const queue = []; // { sp, t } — each span with its scheduled reveal time
 
-  LETTER.forEach((sec, si) => {
+  // Phase 1: pre-render ALL text invisible so paper height is fixed from frame 1.
+  // Paper never grows during scroll => velocity is perfectly constant, zero jerk.
+  LETTER.forEach((sec) => {
     const tag = sec.t === 'p' ? 'p' : 'span';
     const el = document.createElement(tag);
     el.className = 'l-' + sec.t;
-    // append to body or left panel for closing
     const target = (sec.t === 'closing' || sec.t === 'sign') ? left : box;
-
-    setTimeout(() => target.appendChild(el), delay);
     delay += 40;
-
     [...sec.s].forEach(ch => {
-      const d = delay;
       delay += charDelay(ch);
-      setTimeout(() => {
-        if (ch === '\n') { el.appendChild(document.createElement('br')); return; }
-        if (ch === ' ')  { el.appendChild(document.createTextNode(' ')); return; }
-        const sp = document.createElement('span');
-        sp.className = 'c'; sp.textContent = ch;
-        el.appendChild(sp);
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-          sp.classList.add('v');
-        }));
-      }, d);
+      if (ch === '\n') { el.appendChild(document.createElement('br')); return; }
+      if (ch === ' ')  { el.appendChild(document.createTextNode(' ')); return; }
+      const sp = document.createElement('span');
+      sp.className = 'c'; sp.textContent = ch;
+      el.appendChild(sp);
+      queue.push({ sp, t: delay });
     });
-
     delay += (sec.t === 'poem') ? 560 : (sec.t === 'greeting' ? 400 : 780);
+    target.appendChild(el);
   });
 
-  // Show footer elements after all text — staggered so nothing feels sudden
+  const totalDelay = delay;
+
+  // Phase 2: one rAF for layout, then measure paper and start everything.
+  requestAnimationFrame(() => {
+    const ct = document.getElementById('scene-letter');
+    const paper = document.querySelector('.ltr-paper');
+    const scrollNeeded = Math.max(0, paper.offsetHeight - ct.clientHeight);
+    startCameraScroll(totalDelay, scrollNeeded);
+    queue.forEach(({ sp, t }) => setTimeout(() => sp.classList.add('v'), t));
+  });
+
+  // Phase 3: ending — staggered after all text is revealed
   setTimeout(() => {
     const pf = document.getElementById('photo-frame');
     pf.style.display = 'block';
     requestAnimationFrame(() => requestAnimationFrame(() => pf.classList.add('show')));
-  }, delay + 1400);
+  }, totalDelay + 1400);
+  setTimeout(() => document.getElementById('stamp').classList.add('go'), totalDelay + 3600);
   setTimeout(() => {
-    document.getElementById('stamp').classList.add('go');
-  }, delay + 3600);
-  setTimeout(() => {
-    // Camera has drifted to bottom naturally; cancel RAF, show hint
     if (_camRaf) { cancelAnimationFrame(_camRaf); _camRaf = null; }
     document.getElementById('shint').classList.add('show');
-  }, delay + 4800);
-
-  // Music gently fades out 8s after everything is shown
-  setTimeout(() => {
-    if (playing) stopMusic();
-  }, delay + 9000);
+  }, totalDelay + 4800);
+  setTimeout(() => { if (playing) stopMusic(); }, totalDelay + 9000);
 }
 
 function charDelay(ch) {
